@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 
@@ -12,9 +12,25 @@ const navigation = [
 
 export default function Hero() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = [
+    { src: "/Basko_Wonogiri_Ads.png", alt: "Description of image 1" },
+    { src: "/Service_Car_Ads.png", alt: "Description of image 2" },
+    { src: "/Basko_Wonogiri_Ads.png", alt: "Description of image 3" },
+    { src: "/Service_Car_Ads.png", alt: "Description of image 4" },
+  ];
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [images.length]);
+
   const handleFileChange = (event) => {
     const files = event.target.files;
-    console.log(files); // Handle the selected files here
+    console.log(files);
   };
 
   const [value, setValue] = useState("");
@@ -25,6 +41,17 @@ export default function Hero() {
       char.toUpperCase()
     );
     setValue(capitalizedValue);
+  };
+
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (event) => {
+    const { clientX, clientY, target } = event;
+    const { left, top, width, height } = target.getBoundingClientRect();
+    const offsetX = ((clientX - left) / width - 0.5) * 20; // Adjust multiplier for more/less movement
+    const offsetY = ((clientY - top) / height - 0.5) * 20;
+
+    setOffset({ x: offsetX, y: offsetY });
   };
 
   return (
@@ -127,19 +154,40 @@ export default function Hero() {
           </DialogPanel>
         </Dialog>
       </header>
-      <div
-        className="hero min-h-screen bg-white"
-      >
+      <div className="hero min-h-screen bg-white">
         <div className="hero-content flex-col lg:flex-row-reverse">
-          <div className="text-center lg:text-left">
+          <div
+            className="text-center lg:text-left"
+            style={{
+              display: "inline-block",
+              overflow: "hidden",
+              position: "relative",
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setOffset({ x: 0, y: 0 })}
+          >
             <img
-              src="/Iklan.png"
-              alt="Description of the image"
-              className="size-96 xl:size-3/4 lg:size-3/4 md:size-96 sm:size-80 mx-auto"
+              src={images[currentImageIndex].src}
+              alt={images[currentImageIndex].alt}
+              className="w-96 xl:w-4/5 lg:w-3/4 md:w-96 sm:w-80 mx-auto"
+              style={{
+                transform: `translate(${offset.x}px, ${offset.y}px)`,
+                transition: "transform 0.1s ease",
+              }}
             />
           </div>
           <div className="card bg-white w-full max-w-sm shrink-0 shadow-2xl">
             <form className="card-body">
+              <div className="mb-4">
+                <img
+                  src="LOGO_SECURESEND_BLACK.png"
+                  alt="description of image"
+                  className="w-full max-w-xs rounded-lg"
+                />
+                <p className="text-sm text-black mt-2">
+                  Ease, with just a click away.
+                </p>
+              </div>
               <input
                 type="file"
                 className="file-input file-input-bordered w-full max-w-xs"
@@ -165,8 +213,8 @@ export default function Hero() {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="black"
+                      stroke-width="2"
+                      stroke="grey"
                       class="size-6"
                     >
                       <path
@@ -183,8 +231,8 @@ export default function Hero() {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="black"
+                      stroke-width="2"
+                      stroke="grey"
                       class="size-6"
                     >
                       <path
@@ -201,8 +249,8 @@ export default function Hero() {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="black"
+                      stroke-width="2"
+                      stroke="grey"
                       class="size-6"
                     >
                       <path
@@ -219,8 +267,8 @@ export default function Hero() {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="black"
+                      stroke-width="2"
+                      stroke="grey"
                       class="size-6"
                     >
                       <path
@@ -237,8 +285,8 @@ export default function Hero() {
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="black"
+                      stroke-width="2"
+                      stroke="grey"
                       class="size-6"
                     >
                       <path
