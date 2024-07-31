@@ -28,19 +28,34 @@ export default function Hero() {
     return () => clearInterval(intervalId);
   }, [images.length]);
 
-  const handleFileChange = (event) => {
-    const files = event.target.files;
-    console.log(files);
+  const [fileName, setFileName] = useState("");
+  const [title, setTitle] = useState("");
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFileName(file.name);
+      setTitle(file.name);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("http://localhost:5001/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        console.log(data);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
   };
 
-  const [value, setValue] = useState("");
-
-  const handleChange = (event) => {
-    const inputValue = event.target.value;
-    const capitalizedValue = inputValue.replace(/\b\w/g, (char) =>
-      char.toUpperCase()
-    );
-    setValue(capitalizedValue);
+  const handleChangeTitle = (event) => {
+    setTitle(event.target.value);
   };
 
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -48,7 +63,7 @@ export default function Hero() {
   const handleMouseMove = (event) => {
     const { clientX, clientY, target } = event;
     const { left, top, width, height } = target.getBoundingClientRect();
-    const offsetX = ((clientX - left) / width - 0.5) * 20; // Adjust multiplier for more/less movement
+    const offsetX = ((clientX - left) / width - 0.5) * 20;
     const offsetY = ((clientY - top) / height - 0.5) * 20;
 
     setOffset({ x: offsetX, y: offsetY });
@@ -199,8 +214,8 @@ export default function Hero() {
                 type="text"
                 placeholder="Title"
                 className="input input-bordered w-full max-w-xs text-sm bg-inherit text-black font-semibold"
-                value={value}
-                onChange={handleChange}
+                value={title}
+                onChange={handleChangeTitle}
               />
               <textarea
                 className="textarea textarea-bordered text-sm bg-inherit text-black"
