@@ -1,41 +1,50 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const cors = require("cors"); // Tambahkan ini
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const port = 5001;
 
-// Set up storage engine
+// Gunakan CORS
+app.use(cors()); // Tambahkan ini
+
+// Konfigurasi penyimpanan multer
 const storage = multer.diskStorage({
-  destination: "./uploads/",
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Tentukan direktori penyimpanan
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    ); // Nama file yang disimpan
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
-// Middleware to handle JSON data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static folder to serve uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Route to handle file uploads
+// Rute untuk upload file
 app.post("/upload", upload.single("file"), (req, res) => {
-  if (req.file) {
-    res.json({
-      message: "File uploaded successfully",
-      file: req.file.filename,
-    });
-  } else {
-    res.status(400).json({
-      message: "No file uploaded",
-    });
+  try {
+    res
+      .status(200)
+      .json({ message: "File uploaded successfully", file: req.file });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error uploading file", error: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Rute untuk tes GET, hanya untuk memastikan server berjalan
+app.get("/upload", (req, res) => {
+  res.send("Endpoint /upload tersedia.");
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });

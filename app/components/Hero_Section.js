@@ -28,30 +28,80 @@ export default function Hero() {
     return () => clearInterval(intervalId);
   }, [images.length]);
 
+  const [isUploading, setIsUploading] = useState(false);
   const [fileName, setFileName] = useState("");
   const [title, setTitle] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleFileChange = async (event) => {
+  const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setFileName(file.name);
       setTitle(file.name);
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const response = await fetch("http://localhost:5001/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await response.json();
-        console.log(data);
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
     }
+  };
+
+  const handleGetLinkClick = () => {
+    if (!fileName) {
+      alert("Silakan pilih file terlebih dahulu.");
+      return;
+    }
+
+    const file = document.getElementById("file_input").files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5001/upload", true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        console.log("Response from server:", xhr.responseText);
+        setUploadProgress(100);
+        setTimeout(() => {
+          setIsUploading(false);
+        }, 2000);
+      } else {
+        console.error("Upload failed with status:", xhr.status, xhr.statusText);
+        console.error("Response from server:", xhr.responseText);
+        setIsUploading(false);
+      }
+    };
+
+    xhr.onerror = () => {
+      console.error("An error occurred during the upload");
+      setIsUploading(false);
+    };
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const totalDuration = 5000; // 10 detik
+    const interval = totalDuration / 100; // interval untuk setiap 1%
+    let progress = 0;
+
+    const progressInterval = setInterval(() => {
+      progress += 1;
+      setUploadProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        xhr.send(formData);
+      }
+    }, interval);
+  };
+
+  const handleCancelClick = () => {
+    setIsUploading(false);
+    setUploadProgress(0);
+    document.getElementById("file_input").value = "";
   };
 
   const handleChangeTitle = (event) => {
@@ -192,131 +242,74 @@ export default function Hero() {
             />
           </div>
           <div className="card bg-white w-full max-w-sm shrink-0 shadow-2xl">
-            <form className="card-body">
-              <div className="mb-4">
-                <img
-                  src="LOGO_SECURESEND_BLACK.png"
-                  alt="description of image"
-                  className="w-full max-w-xs rounded-lg"
-                />
-                <p className="text-sm text-black mt-2">
-                  Ease, with just a click away.
-                </p>
+            {isUploading ? (
+              <div className="card bg-white max-w-sm shrink-0 shadow-2xl">
+                <form className="card-body">
+                  <div className="flex justify-center">
+                    <div
+                      className="radial-progress mb-4 bg-slate-200 text-slate-400 text-6xl font-bold border-slate-200 border-8 w-60 h-60"
+                      style={{ "--value": uploadProgress }}
+                      role="progressbar"
+                    >
+                      {uploadProgress}%
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-center items-center">
+                    <div className="text-black font-medium text-2xl mb-4">
+                      {uploadProgress < 100 ? "Transferring..." : "Completed!"}
+                    </div>
+                    <div className="text-black">Mengirim 1 file</div>
+                    <div className="text-black mb-4">
+                      {uploadProgress} Bytes dari 500 KB Terunggah
+                    </div>
+                  </div>
+                  <button
+                    className="btn bg-transparent rounded-3xl border-none shadow-none hover:text-white hover:bg-sky-700 bg-sky-500"
+                    onClick={handleCancelClick}
+                  >
+                    Cancel
+                  </button>
+                </form>
               </div>
-              <input
-                type="file"
-                className="file-input file-input-bordered w-full max-w-xs"
-                id="file_input"
-                multiple
-                onChange={handleFileChange}
-              />
-              <input
-                type="text"
-                placeholder="Title"
-                className="input input-bordered w-full max-w-xs text-sm bg-inherit text-black font-semibold"
-                value={title}
-                onChange={handleChangeTitle}
-              />
-              <textarea
-                className="textarea textarea-bordered text-sm bg-inherit text-black"
-                placeholder="Message"
-              ></textarea>
-              <ul className="menu bg-sky-100 menu-horizontal rounded-lg flex justify-between">
-                <li className="tooltip" data-tip="Expired after 3 days">
-                  <a className="hover:bg-sky-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="grey"
-                      class="size-6"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li className="tooltip" data-tip="Sell your files">
-                  <a className="hover:bg-sky-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="grey"
-                      class="size-6"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li className="tooltip" data-tip="Customize background">
-                  <a className="hover:bg-sky-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="grey"
-                      class="size-6"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li className="tooltip" data-tip="Protect your files">
-                  <a className="hover:bg-sky-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="grey"
-                      class="size-6"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li className="tooltip" data-tip="More options">
-                  <a className="hover:bg-sky-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="grey"
-                      class="size-6"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
-                      />
-                    </svg>
-                  </a>
-                </li>
-              </ul>
-              <button className="btn hover:bg-sky-700 bg-sky-500 border-0 text-white">
-                Get a link
-              </button>
-            </form>
+            ) : (
+              <form className="card-body">
+                <div className="mb-4">
+                  <img
+                    src="LOGO_SECURESEND_BLACK.png"
+                    alt="deskripsi gambar"
+                    className="w-full max-w-xs rounded-lg"
+                  />
+                  <p className="text-sm text-black mt-2">
+                    Mudah, hanya dengan satu klik.
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  className="file-input file-input-bordered w-full max-w-xs"
+                  id="file_input"
+                  multiple
+                  onChange={handleFileChange}
+                />
+                <input
+                  type="text"
+                  placeholder="Title"
+                  className="input input-bordered w-full max-w-xs text-sm bg-inherit text-black font-semibold"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <textarea
+                  className="textarea textarea-bordered text-sm bg-inherit text-black"
+                  placeholder="Message"
+                ></textarea>
+                <button
+                  className="btn hover:bg-sky-700 bg-sky-500 border-0 text-white"
+                  type="button"
+                  onClick={handleGetLinkClick}
+                >
+                  Get a link
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
